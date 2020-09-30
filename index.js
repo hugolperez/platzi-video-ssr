@@ -18,6 +18,9 @@ require('./utils/auth/strategies/basic');
 //Oauth strategy
 require('./utils/auth/strategies/oauth');
 
+//Gootle Authentication strategy
+require('./utils/auth/strategies/google');
+
 app.post('/auth/sign-in', async function (req, res, next) {
   passport.authenticate('basic', function (error, data) {
     try {
@@ -126,6 +129,32 @@ app.get(
     res.cookie('token', token, {
       httpOnly: !config.dev,
       secure: !config.dev,
+    });
+
+    res.status(200).json(user);
+  }
+);
+
+app.get(
+  '/auth/google',
+  passport.authenticate('google', {
+    scope: ['email', 'profile', 'openid']
+  })
+);
+
+app.get(
+  '/auth/google/callback',
+  passport.authenticate('google', { session: false }),
+  function(req, res, next) {
+    if(!req.user) {
+      next(boom.unauthorized());
+    }
+
+    const { token, ...user } = req.user;
+
+    res.cookie('token', token, {
+      httpOnly: !config.dev,
+      secure: !config.dev
     });
 
     res.status(200).json(user);
